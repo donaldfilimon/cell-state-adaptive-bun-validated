@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { COMPUTE_WGSL, RENDER_WGSL } from '../src/gpu/shaders';
+import { shouldApplyGpuReadback } from '../src/gpu/engine';
 
 describe('shipped WebGPU path', () => {
   test('compute shader writes simulation buffers', () => {
@@ -79,7 +80,15 @@ describe('shipped WebGPU path', () => {
     const kick = source.slice(source.indexOf('private kickReadback'), source.indexOf('private presentOnly'));
     expect(kick).toMatch(/this\.cpuState = new Float32Array\(/);
     expect(kick).toContain('getMappedRange()');
+    expect(kick).toContain('shouldApplyGpuReadback(this.dead, gen, this.readGen)');
     const resetTo = source.slice(source.indexOf('private resetTo'), source.indexOf('private stepOnce'));
     expect(resetTo).toContain('this.cpuState = createInitialState(id)');
+    expect(resetTo).toContain('this.readGen += 1');
+  });
+
+  test('stale GPU readback after challenge reset is ignored', () => {
+    expect(shouldApplyGpuReadback(false, 1, 1)).toBe(true);
+    expect(shouldApplyGpuReadback(false, 1, 2)).toBe(false);
+    expect(shouldApplyGpuReadback(true, 2, 2)).toBe(false);
   });
 });

@@ -38,6 +38,11 @@ function navigatorGpu(): GPU | undefined {
   return navigator.gpu;
 }
 
+/** Ignore GPU readback that started before a challenge reset or destroy. */
+export function shouldApplyGpuReadback(dead: boolean, mappedGen: number, currentGen: number): boolean {
+  return !dead && mappedGen === currentGen;
+}
+
 function fitCanvas(canvas: HTMLCanvasElement, fallbackW: number, fallbackH: number): { w: number; h: number } {
   const w = Math.max(1, Math.round(canvas.clientWidth || fallbackW));
   const h = Math.max(1, Math.round(canvas.clientHeight || fallbackH));
@@ -61,6 +66,7 @@ export class SimulationEngine {
   private acc = 0;
   private last = 0;
   private mapping = false;
+  private readGen = 0;
   private tile: HTMLCanvasElement | null = null;
   private tileCtx: CanvasRenderingContext2D | null = null;
 
@@ -317,6 +323,7 @@ export class SimulationEngine {
   }
 
   private resetTo(id: ChallengeId): void {
+    this.readGen += 1;
     this.cpuState = createInitialState(id);
     this.fieldA = createField();
     this.fieldB = createField();
@@ -379,10 +386,12 @@ export class SimulationEngine {
     if (!this.staging || this.mapping) return;
     this.mapping = true;
     const staging = this.staging;
+    const gen = this.readGen;
     staging.mapAsync(MAP_READ).then(() => {
-      if (!this.dead) {
-        // Copy mapped GPU packed state so UI metrics match the presented field.
+      if (shouldApplyGpuReadback(this.dead, gen, this.readGen)) {
         this.cpuState = new Float32Array(staging.getMappedRange()).slice();
+      } else {
+        void staging.getMappedRange();
       }
       staging.unmap();
       this.mapping = false;
