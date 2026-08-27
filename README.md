@@ -43,3 +43,10 @@ The site explicitly avoids claiming that any machine can solve every mathematica
 ## Runtime note
 
 Development uses Vite through Bun. Production output is served by `Bun.serve` from `server.ts`.
+
+## Verification
+
+The complete locked-install, type-check, 37-test, production-build, asset,
+SPA-fallback, and path-traversal smoke evidence was refreshed on 2026-08-27.
+See [`VALIDATION.md`](VALIDATION.md) for the exact results and current bundle
+sizes.

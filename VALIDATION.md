@@ -8,11 +8,24 @@ Completed in the packaging environment:
 - CSS structural brace validation passed.
 - Required navigation sections, live regions, reduced-motion support, and Bun.serve entrypoint were verified.
 
-Full dependency-backed validation completed: bun install (74 packages), `bun run check` clean, `bun run build` clean (dist: 213.93 kB js / 67.01 kB gzip), Bun.serve smoke-tested (assets, SPA fallback, traversal guarded — encoded and plain `..` paths resolve to the app shell, never source files). Fixed tsconfig.node.json TS5096: replaced unused `allowImportingTsExtensions` with `noEmit`.
+Full dependency-backed validation was re-run on 2026-08-27 with Bun 1.4.0:
+
+- `bun install --frozen-lockfile` installed the 73 locked packages.
+- `bun run check` passed.
+- `bun run test` passed all 37 tests across two files (469 assertions).
+- `bun run build` passed; the production JS is 249.28 kB / 78.26 kB
+  gzip, and the CSS is 18.67 kB / 4.90 kB gzip.
+- `Bun.serve` returned the root page, a hashed production asset, and the SPA
+  fallback. An encoded `..` request returned the app shell and did not expose
+  `package.json`.
+
+The earlier TS5096 repair remains in place: `tsconfig.node.json` uses
+`noEmit` instead of the unused `allowImportingTsExtensions` option.
 
 ```bash
 bun install
 bun run check
+bun run test
 bun run build
 bun run start
 ```
